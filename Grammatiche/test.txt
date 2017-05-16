@@ -1,7 +1,0 @@
-Test:
-S --> 0S | BD | E0
-B --> C | epsilon | 1
-D --> A0 | S | epsilon | 0
-E --> BE | SE
-C --> 0
-F --> C
