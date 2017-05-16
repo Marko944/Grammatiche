@@ -3,7 +3,7 @@ package grammatica.master;
 import grammatica.struttura.Grammatica;
 import grammatica.utility.Parser;
 
-public class master {
+public class GrammaticheMaster {
 	
 	/** 
 	 * debug = 0 :: OFF

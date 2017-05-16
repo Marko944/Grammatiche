@@ -2,7 +2,7 @@ package grammatica.struttura;
 
 import java.util.ArrayList;
 
-import grammatica.master.master;
+import grammatica.master.GrammaticheMaster;
 import grammatica.utility.Tripla;
 
 public class Grammatica {
@@ -25,10 +25,14 @@ public class Grammatica {
 		}	
 	}
 	
-	/** Ritorna una grammatica senza epsilon produzioni (Elimina pure S --> epsilon) */
+	/**
+	 * Ritorna una grammatica senza epsilon produzioni (Elimina pure S --> epsilon)
+	 * @return Grammatica
+	 * @throws Exception
+	 */
 	public Grammatica eliminaEpsilon() throws Exception {
 		InsiemeVar annullabili = trovaAnnullabili(new InsiemeVar());
-		if(master.debug>0)
+		if(GrammaticheMaster.debug>0)
 			System.out.println("Annullabili: "+annullabili+"\n");
 		String nome = this.nome+" - No Epsilon";
 		InsiemeVar insiemeVar = variabili;
@@ -68,15 +72,32 @@ public class Grammatica {
 		return new Grammatica(nome, insiemeVar, insiemeProd, simboloIniziale);
 	}
 	
-	/** Restituisce una Grammatica a partire dall'attuale senza variabili improduttive */
+	/**
+	 * Restituisce una Grammatica a partire dall'attuale senza variabili improduttive dal fondo
+	 * @return Grammatica senza produzioni non significative a partire dai terminali
+	 * @throws Exception
+	 */
 	public Grammatica eliminaImproduttive() throws Exception {
 		String nome = this.nome+" - No Improduttive";
 		Simbolo simboloIniziale = this.simboloIniziale;
-		InsiemeProd insiemeProd = new InsiemeProd(soloProduttive(null));
+		InsiemeProd insiemeProd = null;
+		try {
+			insiemeProd = new InsiemeProd(soloProduttive(null));
+		} catch (Exception e) {/* Per entrare qua dovresti aver finito la memoria */}
 		InsiemeVar insiemeVar = estraiVariabili(insiemeProd);
-		return new Grammatica(nome, insiemeVar, insiemeProd, simboloIniziale);
+		try {
+			return new Grammatica(nome, insiemeVar, insiemeProd, simboloIniziale);
+		} catch (Exception e) {
+			throw new Exception(e);
+		}
 	}
 	
+	
+	/**
+	 * Restituisce solo le produzioni che, a partire dai terminali, arrivano a qualcosa
+	 * @param produzioniProduttive prima chiamata con null
+	 * @return ArrayList<<Produzione>Produzione>
+	 */
 	@SuppressWarnings("unchecked")
 	private ArrayList<Produzione> soloProduttive(ArrayList<Produzione> produzioniProduttive) {
 		ArrayList<Produzione> temp = null;
@@ -118,7 +139,7 @@ public class Grammatica {
 		}
 		//test convergenza
 		temp = eliminaDoppioni(temp);
-		if(master.debug>1) //debug
+		if(GrammaticheMaster.debug>1) //debug
 			System.out.println(temp); //debug
 		if(arrayProduzioniUguali(precedente,temp))
 			return temp;
@@ -126,10 +147,35 @@ public class Grammatica {
 		return soloProduttive(temp);
 	}
 	
+	/**
+	 * @return Vero se la grammatica è nella forma normale di Chomsky
+	 */
+	public boolean isChomsky() {
+		for(Tripla t : produzioni.getTriplaProduzioni()) {
+			for(Produzione p : t.getProd()) {
+				Stringa str = p.getDX();
+				if(str.getSize()==1 && !str.getSimboloAt(0).isTerminale())
+					return false;
+				if(str.getSize()==2 && (str.getSimboloAt(0).isTerminale() || str.getSimboloAt(1).isTerminale()))
+					return false;
+				if(str.getSize()>2)
+					return false;
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * Stampa la grammatica
+	 */
+	public void print() {
+		System.out.println(nome+":");
+		System.out.println(produzioni);
+	}
 	
 	/**
 	 * Trova tutte le variabili annullabili (l'insieme di ritorno non contiene epsilon) 
-	 * @param InsiemeVar Insieme di variabili
+	 * @param insiemeVar Insieme di variabili
 	 * @return InsiemeVar Insieme di variabili
 	 * @throws Exception
 	 */
@@ -163,34 +209,7 @@ public class Grammatica {
 		//chiamata ricorsiva
 		return trovaAnnullabili(temp);
 	}
-	
-	/**
-	 * Stampa la grammatica
-	 */
-	public void print() {
-		System.out.println(nome+":");
-		System.out.println(produzioni);
-	}
-	
-	/**
-	 * @return Vero se la grammatica è nella forma normale di Chomsky
-	 */
-	public boolean isChomsky() {
-		for(Tripla t : produzioni.getTriplaProduzioni()) {
-			for(Produzione p : t.getProd()) {
-				Stringa str = p.getDX();
-				if(str.getSize()==1 && !str.getSimboloAt(0).isTerminale())
-					return false;
-				if(str.getSize()==2 && (str.getSimboloAt(0).isTerminale() || str.getSimboloAt(1).isTerminale()))
-					return false;
-				if(str.getSize()>2)
-					return false;
-			}
-		}
-		return true;
-	}
-	
-	
+		
 	/**
 	 * @return true se le variabili delle produzioni sono contenute nell'insieme delle variabili
 	 */
